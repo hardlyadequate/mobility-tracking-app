@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Movement Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1f2535;
+    --border: #2a3045;
+    --accent: #7ecfa4;
+    --accent2: #5bb8e8;
+    --accent3: #e8a85b;
+    --text: #dde3f0;
+    --text-dim: #7a849e;
+    --text-muted: #4a546a;
+    --done: #7ecfa4;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  header p {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-top: 4px;
+  }
+
+  .week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .week-nav button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .week-nav button:hover { border-color: var(--accent); color: var(--accent); }
+
+  .week-nav span {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    min-width: 140px;
+    text-align: center;
+  }
+
+  .days-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+
+  .day-btn {
+    flex: 1;
+    max-width: 54px;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    transition: all 0.15s;
+    gap: 2px;
+  }
+
+  .day-btn .day-label {
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .day-btn .day-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+  }
+
+  .day-btn:hover { border-color: var(--accent); }
+
+  .day-btn.active {
+    border-color: var(--accent);
+    background: rgba(126, 207, 164, 0.1);
+  }
+
+  .day-btn.active .day-label { color: var(--accent); }
+  .day-btn.active .day-num { color: var(--accent); }
+
+  .day-btn.today .day-num {
+    color: var(--accent2);
+    font-weight: 600;
+  }
+
+  .day-btn.has-activity::after {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: block;
+  }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  .section-header:hover { background: var(--surface2); }
+
+  .section-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .section-icon.yoga { background: rgba(91,184,232,0.15); }
+  .section-icon.hip { background: rgba(232,168,91,0.15); }
+  .section-icon.quad { background: rgba(126,207,164,0.15); }
+
+  .section-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .section-subtitle {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .section-freq {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 3px 8px;
+    flex-shrink: 0;
+  }
+
+  .section-body {
+    display: none;
+    padding: 6px 14px 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .section.open .section-body { display: block; }
+
+  .section-chevron {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    margin-left: 8px;
+  }
+
+  .section.open .section-chevron { transform: rotate(180deg); }
+
+  .movements-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    margin-top: 4px;
+  }
+
+  .move-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    position: relative;
+  }
+
+  .move-btn:hover { border-color: var(--accent2); background: rgba(91,184,232,0.05); }
+
+  .move-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .move-btn.done .move-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0f1117;
+  }
+
+  .move-btn.done .move-check::after {
+    content: '✓';
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .move-btn.done {
+    border-color: rgba(126,207,164,0.3);
+    background: rgba(126,207,164,0.04);
+  }
+
+  .move-name {
+    font-size: 0.78rem;
+    color: var(--text);
+    font-weight: 500;
+    flex: 1;
+    line-height: 1.3;
+  }
+
+  .move-btn.done .move-name { color: var(--text-dim); }
+
+  .info-btn {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--text-muted);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .info-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* 90/90 steps list */
+  .steps-list {
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .step-item:hover { border-color: var(--accent3); background: rgba(232,168,91,0.05); }
+
+  .step-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border-radius: 4px;
+    padding: 2px 5px;
+    flex-shrink: 0;
+  }
+
+  .step-name {
+    font-size: 0.8rem;
+    color: var(--text);
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .step-detail {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 1px;
+  }
+
+  .step-item.done {
+    border-color: rgba(232,168,91,0.3);
+    background: rgba(232,168,91,0.04);
+  }
+
+  .step-item.done .step-name { color: var(--text-muted); }
+
+  .step-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .step-item.done .step-check {
+    background: var(--accent3);
+    border-color: var(--accent3);
+    color: #0f1117;
+  }
+
+  .step-item.done .step-check::after {
+    content: '✓';
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .step-info-btn {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--text-muted);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .step-info-btn:hover { border-color: var(--accent3); color: var(--accent3); }
+
+  /* Summary bar */
+  .summary-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .summary-card {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    text-align: center;
+  }
+
+  .summary-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .summary-num.accent { color: var(--accent); }
+
+  .summary-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  /* Popup */
+  .popup-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .popup-overlay.open { display: flex; }
+
+  .popup {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    max-width: 420px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 22px;
+    position: relative;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    animation: popIn 0.18s ease;
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.95) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .popup-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: border-color 0.15s;
+  }
+
+  .popup-close:hover { border-color: var(--text-dim); }
+
+  .popup-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+
+  .popup-badge.yoga { background: rgba(91,184,232,0.15); color: var(--accent2); }
+  .popup-badge.hip { background: rgba(232,168,91,0.15); color: var(--accent3); }
+  .popup-badge.quad { background: rgba(126,207,164,0.15); color: var(--accent); }
+
+  .popup h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+    padding-right: 30px;
+    line-height: 1.3;
+  }
+
+  .popup p {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.65;
+    margin-bottom: 10px;
+  }
+
+  .popup ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .popup ul li {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    padding-left: 14px;
+    position: relative;
+    line-height: 1.55;
+  }
+
+  .popup ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    top: 1px;
+  }
+
+  .popup .tip {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    padding: 10px 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+
+  .popup .tip.orange { border-left-color: var(--accent3); }
+  .popup .tip.blue { border-left-color: var(--accent2); }
+
+  .popup-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 12px;
+    font-size: 0.75rem;
+    color: var(--accent2);
+    text-decoration: none;
+    border: 1px solid rgba(91,184,232,0.25);
+    border-radius: 6px;
+    padding: 5px 10px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .popup-link:hover { border-color: var(--accent2); background: rgba(91,184,232,0.08); }
+
+  .popup-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 14px 0;
+  }
+
+  /* Weekly block summary */
+  .week-summary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+
+  .week-summary-title {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .block-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .block-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .block-row-icon {
+    font-size: 0.9rem;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .block-row-label {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    width: 110px;
+    flex-shrink: 0;
+  }
+
+  .block-dots {
+    display: flex;
+    gap: 5px;
+    flex: 1;
+    align-items: center;
+  }
+
+  .block-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .block-dot.partial {
+    border-color: rgba(126,207,164,0.3);
+    background: rgba(126,207,164,0.08);
+    color: var(--accent);
+  }
+
+  .block-dot.full {
+    border-color: var(--accent);
+    background: rgba(126,207,164,0.18);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .block-dot.full.yoga-color { border-color: var(--accent2); background: rgba(91,184,232,0.15); color: var(--accent2); }
+  .block-dot.full.hip-color  { border-color: var(--accent3); background: rgba(232,168,91,0.15);  color: var(--accent3); }
+  .block-dot.full.quad-color { border-color: var(--accent);  background: rgba(126,207,164,0.15); color: var(--accent);  }
+
+  .block-dot.partial.yoga-color { border-color: rgba(91,184,232,0.3); background: rgba(91,184,232,0.06); color: var(--accent2); }
+  .block-dot.partial.hip-color  { border-color: rgba(232,168,91,0.3); background: rgba(232,168,91,0.06); color: var(--accent3); }
+  .block-dot.partial.quad-color { border-color: rgba(126,207,164,0.3); background: rgba(126,207,164,0.06); color: var(--accent); }
+
+  .block-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    width: 32px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* week stats */
+  .week-progress {
+    margin-top: 8px;
+  }
+
+  .week-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+
+  .week-bar-bg {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .week-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* Export / Import */
+  .data-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .data-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+
+  .data-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(126,207,164,0.05); }
+  .data-btn.import:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(91,184,232,0.05); }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.78rem;
+    padding: 8px 16px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 200;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Movement Tracker</h1>
+  <p>Click any movement to learn how to do it</p>
+</header>
+
+<div class="week-nav">
+  <button id="prevWeek">‹</button>
+  <span id="weekLabel"></span>
+  <button id="nextWeek">›</button>
+</div>
+
+<div class="days-row" id="daysRow"></div>
+
+<div class="data-bar">
+  <button class="data-btn" onclick="exportData()">↓ Export history</button>
+  <button class="data-btn import" onclick="document.getElementById('importFile').click()">↑ Import history</button>
+</div>
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+<div class="toast" id="toast"></div>
+
+<div class="summary-bar">
+  <div class="summary-card">
+    <div class="summary-num accent" id="totalDone">0</div>
+    <div class="summary-label">Today Done</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-num" id="totalItems">0</div>
+    <div class="summary-label">Total Items</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-num" id="weekDays">0</div>
+    <div class="summary-label">Days Active</div>
+  </div>
+</div>
+
+<!-- WEEKLY BLOCK SUMMARY -->
+<div class="week-summary">
+  <div class="week-summary-title">This week — sessions per block</div>
+  <div class="block-rows">
+    <div class="block-row">
+      <div class="block-row-icon">🧘</div>
+      <div class="block-row-label">Yoga</div>
+      <div class="block-dots" id="yoga-week-dots"></div>
+      <div class="block-count" id="yoga-week-count"></div>
+    </div>
+    <div class="block-row">
+      <div class="block-row-icon">🦵</div>
+      <div class="block-row-label">90/90 Drills</div>
+      <div class="block-dots" id="hip-week-dots"></div>
+      <div class="block-count" id="hip-week-count"></div>
+    </div>
+    <div class="block-row">
+      <div class="block-row-icon">🐻</div>
+      <div class="block-row-label">Quadrupedal</div>
+      <div class="block-dots" id="quad-week-dots"></div>
+      <div class="block-count" id="quad-week-count"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 1: YOGA -->
+<div class="section open" id="sec-yoga">
+  <div class="section-header" onclick="toggleSection('sec-yoga')">
+    <div class="section-title-row">
+      <div class="section-icon yoga">🧘</div>
+      <div>
+        <div class="section-title">Yoga Standing Postures</div>
+        <div class="section-subtitle">Knee health & hip stability</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span class="section-freq">3–4×/wk</span>
+      <span class="section-chevron">▾</span>
+    </div>
+  </div>
+  <div class="section-body">
+    <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:10px;">Hold 30 sec each side. Actively engage your legs throughout.</p>
+    <div class="movements-grid" id="yoga-grid"></div>
+    <div class="week-progress" style="margin-top:12px;">
+      <div class="week-progress-label"><span>Today's progress</span><span id="yoga-prog-label"></span></div>
+      <div class="week-bar-bg"><div class="week-bar-fill" id="yoga-bar" style="width:0%;background:var(--accent2);"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: 90/90 -->
+<div class="section" id="sec-hip">
+  <div class="section-header" onclick="toggleSection('sec-hip')">
+    <div class="section-title-row">
+      <div class="section-icon hip">🦵</div>
+      <div>
+        <div class="section-title">90/90 Drills</div>
+        <div class="section-subtitle">Hip mobility</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span class="section-freq">5–7×/wk</span>
+      <span class="section-chevron">▾</span>
+    </div>
+  </div>
+  <div class="section-body">
+    <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:10px;">A sequence of 5 drills. Work through them in order.</p>
+    <div class="steps-list" id="hip-list"></div>
+    <div class="week-progress" style="margin-top:12px;">
+      <div class="week-progress-label"><span>Today's progress</span><span id="hip-prog-label"></span></div>
+      <div class="week-bar-bg"><div class="week-bar-fill" id="hip-bar" style="width:0%;background:var(--accent3);"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3: QUADRUPEDAL -->
+<div class="section" id="sec-quad">
+  <div class="section-header" onclick="toggleSection('sec-quad')">
+    <div class="section-title-row">
+      <div class="section-icon quad">🐻</div>
+      <div>
+        <div class="section-title">Quadrupedal Movement</div>
+        <div class="section-subtitle">Body control & coordination</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span class="section-freq">5–7×/wk</span>
+      <span class="section-chevron">▾</span>
+    </div>
+  </div>
+  <div class="section-body">
+    <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:10px;">1 min each movement. Perform SLOWLY — full control every rep.</p>
+    <div class="movements-grid" id="quad-grid"></div>
+    <div class="week-progress" style="margin-top:12px;">
+      <div class="week-progress-label"><span>Today's progress</span><span id="quad-prog-label"></span></div>
+      <div class="week-bar-bg"><div class="week-bar-fill" id="quad-bar" style="width:0%;background:var(--accent);"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP -->
+<div class="popup-overlay" id="popupOverlay" onclick="closePopupIfOutside(event)">
+  <div class="popup" id="popupBox">
+    <button class="popup-close" onclick="closePopup()">✕</button>
+    <div id="popupContent"></div>
+  </div>
+</div>
+
+<script>
+// ---- DATA ----
+
+const yogaPoses = [
+  {
+    id: 'warrior1',
+    name: 'Warrior 1',
+    link: 'https://manflowyoga.com/exercise-guide/warrior-1/',
+    desc: 'A foundational standing posture that builds strength in the legs, hips, and core while opening the chest and shoulders.',
+    cues: [
+      'Step one foot forward into a lunge, front knee over ankle',
+      'Back foot angled 45°, heel pressing into the floor',
+      'Hips square to the front, arms raised overhead',
+      'Actively squeeze your legs toward each other the entire time',
+      'Hold 30 sec each side'
+    ],
+    tip: 'Squeeze your legs together as if you\'re trying to drag your back foot toward your front — this fires the glutes and stabilises the hips.'
+  },
+  {
+    id: 'highlunge',
+    name: 'High Lunge',
+    link: 'https://manflowyoga.com/exercise-guide/high-lunge/',
+    desc: 'Similar to Warrior 1 but with the back heel lifted — more demanding on balance and great for hip flexor stretch.',
+    cues: [
+      'Back heel lifted, ball of foot on floor',
+      'Front knee stacked over ankle',
+      'Engage the back leg strongly — push through the heel',
+      'Arms overhead, chest open',
+      'Hold 30 sec each side'
+    ],
+    tip: 'Keep your hips level. The tendency is to let the hip on the back leg side hike up — resist that actively.'
+  },
+  {
+    id: 'warrior2',
+    name: 'Warrior 2',
+    link: 'https://manflowyoga.com/exercise-guide/warrior-2/',
+    desc: 'Opens the hips and groin while building leg and hip endurance. Arms extend out parallel to the floor.',
+    cues: [
+      'Wide stance, front foot forward, back foot 90°',
+      'Front knee bent and tracking over the second toe',
+      'Hips open to the side, not forward',
+      'Arms extended, gaze over front hand',
+      'Hold 30 sec each side'
+    ],
+    tip: 'Press the outer edge of your back foot into the floor and try to drag it toward your front foot — inner thighs activate hard.'
+  },
+  {
+    id: 'triangle',
+    name: 'Triangle',
+    link: 'https://manflowyoga.com/exercise-guide/triangle/',
+    desc: 'Stretches the hamstrings, groin, and outer hip while building lateral stability.',
+    cues: [
+      'Wide stance, front foot forward, back foot 90°',
+      'Straighten both legs (micro-bend in front knee)',
+      'Hinge sideways, reaching front hand toward shin or floor',
+      'Top arm extends straight up, gaze up or forward',
+      'Hold 30 sec each side'
+    ],
+    tip: 'The work is in the legs — press both feet into the ground and lift your inner arches. This keeps the posture active, not passive.'
+  },
+  {
+    id: 'revtriangle',
+    name: 'Revolved Triangle',
+    link: 'https://yogapose.com/pose/revolved-triangle-pose/',
+    desc: 'Adds a deep spinal rotation to the Triangle, testing hip stability and thoracic mobility.',
+    cues: [
+      'Same leg position as Triangle',
+      'Opposite hand reaches toward front foot',
+      'Rotate the torso open, top arm extending up',
+      'Both legs stay active and engaged',
+      'Hold 30 sec each side'
+    ],
+    tip: 'This one exposes hip and thoracic tightness quickly. Don\'t sacrifice the leg engagement to get deeper in the twist.'
+  },
+  {
+    id: 'warrior3',
+    name: 'Warrior 3',
+    link: 'https://manflowyoga.com/exercise-guide/warrior-3/',
+    desc: 'A single-leg balance posture that trains hip stability, posterior chain strength, and proprioception.',
+    cues: [
+      'Balance on one leg, body and lifted leg form a T-shape',
+      'Standing leg slightly bent, not locked',
+      'Flex the lifted foot and press through the heel',
+      'Arms forward, overhead, or back — choose your challenge',
+      'Hold 30 sec each side'
+    ],
+    tip: 'Focus on keeping your hips level — the hip of the lifted leg wants to open upward. Resist it using the standing hip abductors.'
+  },
+  {
+    id: 'chair',
+    name: 'Chair',
+    link: 'https://manflowyoga.com/exercise-guide/chair/',
+    desc: 'A quad and glute burner that mimics sitting in a chair — great for knee and ankle stability.',
+    cues: [
+      'Feet together or hip-width, bend knees as if sitting',
+      'Knees track over second toes, not caving inward',
+      'Weight in heels, chest lifted',
+      'Arms overhead or hands at heart',
+      'Hold 30–60 sec'
+    ],
+    tip: 'Push your knees outward throughout. This activates the glute medius and protects the knee joint.'
+  },
+  {
+    id: 'horse',
+    name: 'Horse',
+    link: 'https://manflowyoga.com/blog/horse-pose-for-beginners-and-men/',
+    desc: 'A wide-legged squat that builds inner thigh and hip strength. Excellent for groin flexibility and grounding.',
+    cues: [
+      'Feet wide (2× shoulder width), toes angled out 45°',
+      'Sink into a deep squat, knees tracking over toes',
+      'Hips parallel to the floor if possible',
+      'Hands on knees or at heart',
+      'Hold 30–60 sec'
+    ],
+    tip: 'Drive your knees outward with your hands if needed. Over time this becomes a great test of inner thigh strength and hip mobility.'
+  }
+];
+
+const hipDrills = [
+  {
+    id: 'passive90',
+    name: 'Passive Stretching',
+    detail: 'Standard 90/90 setup',
+    desc: 'Start in a standard 90/90 position — both shins perpendicular to each other, torso upright. Gently twist, lean, and explore ranges of motion. Hold any tight spots for ~30 sec.',
+    cues: [
+      'Front shin at 90° in front of you, back shin at 90° behind',
+      'Sit up tall — don\'t collapse through the lower back',
+      'One or both hands on the floor for support',
+      'Gently twist your torso in different directions',
+      'Lean forward into any tightness and hold 30 sec'
+    ],
+    tip: 'This is exploration, not forcing. Find where you\'re tight and breathe into it rather than yanking deeper.'
+  },
+  {
+    id: 'transitions',
+    name: '90/90 Transitions',
+    detail: '10 reps/side',
+    desc: 'Transition between 90/90 positions by leading with your back leg. Can be done with hands on the floor (easier) or off (harder).',
+    cues: [
+      'Start in standard 90/90',
+      'Hands can be on floor (easier) or off (harder)',
+      'Lead with your back leg to swing into 90/90 on the other side',
+      '10 reps each side',
+      'Keep the movement controlled and upright'
+    ],
+    tip: 'Resist the urge to use your hands to push yourself over. The goal is hip power, not momentum.'
+  },
+  {
+    id: 'rotation',
+    name: 'External/Internal Rotation',
+    detail: '10 reps/side',
+    desc: 'Actively train the range of motion in your hip joint — both external and internal rotation — while keeping your back flat.',
+    cues: [
+      'Start in 90/90 with both hands on the floor',
+      'External rotation: press front knee down, lift front foot as high as possible. Hold 3–5 sec',
+      'Internal rotation: press back knee down, lift back foot as high as possible. Hold 3–5 sec',
+      'Do NOT compensate by leaning or arching the back',
+      '10 reps each side'
+    ],
+    tip: 'This is PAILs/RAILs territory — you\'re actively contracting at end range. The strength gains here are what translate to real-world hip stability.'
+  },
+  {
+    id: 'pushups',
+    name: '90/90 Push Ups',
+    detail: '10 reps/side',
+    desc: 'Hinge forward at the hips toward your front leg, then push back up using only your front leg hip extension. A powerful posterior chain exercise.',
+    cues: [
+      'Start in 90/90 with hands off the floor',
+      'Clasp hands behind you (easier) or extend in front (harder)',
+      'Hinge forward at hips, lowering chest toward front leg',
+      'Go as low as possible',
+      'Push back up using only your front leg — 10 reps each side'
+    ],
+    tip: 'The further your arms extend in front, the harder the balance challenge. Start clasped behind and progress from there.'
+  },
+  {
+    id: 'lateral',
+    name: 'Lateral Reach',
+    detail: '1–2 reps/side, hold 10 sec',
+    desc: 'A lateral anti-rotation hold that fires the opposite glute. Tests your ability to maintain upright posture while reaching to the side.',
+    cues: [
+      'Start in 90/90 with hands off the floor',
+      'Extend the arm on the same side as your front leg directly out to the side',
+      'The further the arm extends, the harder it gets',
+      'Keep the torso tall — don\'t lean into the reach',
+      'Hold 10 sec. Add a light weight to progress'
+    ],
+    tip: 'Your opposite glute should be firing hard. If you don\'t feel it, you\'re leaning too much. Sit taller and reduce the reach first.'
+  }
+];
+
+const quadMoves = [
+  {
+    id: 'bear',
+    name: 'Bear Crawl',
+    link: 'https://gmb.io/bear/',
+    desc: 'On hands and knees with knees hovering an inch off the floor. Move forward, backward, and laterally while staying low and controlled.',
+    cues: [
+      'Hands under shoulders, knees under hips, knees 1 inch off floor',
+      'Move opposite hand and foot together',
+      'Keep hips level — resist rotating or bouncing',
+      'Perform SLOWLY — every movement fully controlled',
+      '1 minute continuous'
+    ],
+    tip: 'Most people rush these. Try moving one limb at a time as slowly as possible. Your core and shoulders will be working far harder than you expect.'
+  },
+  {
+    id: 'monkey',
+    name: 'Monkey',
+    link: 'https://gmb.io/monkey/',
+    desc: 'A lateral movement pattern that trains the side of the body most people ignore. Exceptional carryover to BJJ, sport, and daily life.',
+    cues: [
+      'Squat low, hands on floor outside your hips',
+      'Move laterally — lead with your feet, follow with your hands',
+      'Stay low throughout, hips near ground level',
+      'SLOWLY — control the landing of every hand and foot',
+      '1 minute each direction'
+    ],
+    tip: 'This one is particularly powerful because almost nothing trains lateral strength and coordination. Go slow to get the full benefit.'
+  },
+  {
+    id: 'frogger',
+    name: 'Frogger',
+    link: 'https://gmb.io/frogger/',
+    desc: 'A squat-based movement that builds hip and ankle mobility alongside upper body coordination. Alternates between extended and compressed positions.',
+    cues: [
+      'Start in a deep squat with hands on the floor',
+      'Jump or step feet back to plank, then return to squat',
+      'Keep the movement fluid and controlled',
+      'Full hip extension in plank position',
+      '1 minute, SLOWLY'
+    ],
+    tip: 'The key is fully extending through the hips at the top of each rep. Don\'t rush — own each position before moving to the next.'
+  },
+  {
+    id: 'crab',
+    name: 'Crab',
+    link: 'https://gmb.io/crab/',
+    desc: 'Face-up quadrupedal movement that opens the shoulders and chest while challenging posterior chain strength and coordination.',
+    cues: [
+      'Sit with hands behind you, hips lifted off the floor',
+      'Move in any direction — forward, backward, side to side',
+      'Keep hips high throughout',
+      'Shoulders active, not passive — push into the floor',
+      '1 minute, SLOWLY'
+    ],
+    tip: 'This one exposes shoulder tightness and weak wrists quickly. Start with 30 sec and build up. Your wrists will adapt and strengthen over time.'
+  }
+];
+
+// ---- STATE ----
+
+let weekOffset = 0; // 0 = current week
+let selectedDayIndex = null; // null = today
+let state = {}; // keyed by "YYYY-MM-DD" -> { yoga: Set, hip: Set, quad: Set }
+
+function getWeekDates(offset) {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + offset * 7);
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    dates.push(d);
+  }
+  return dates;
+}
+
+function dateKey(d) {
+  return d.toISOString().split('T')[0];
+}
+
+function getActiveDate() {
+  const dates = getWeekDates(weekOffset);
+  if (selectedDayIndex !== null) return dates[selectedDayIndex];
+  // default to today, or closest day in week
+  const today = new Date();
+  const key = dateKey(today);
+  const found = dates.find(d => dateKey(d) === key);
+  return found || dates[0];
+}
+
+function getActiveDayState() {
+  const key = dateKey(getActiveDate());
+  if (!state[key]) state[key] = { yoga: new Set(), hip: new Set(), quad: new Set() };
+  return state[key];
+}
+
+function saveState() {
+  const serial = {};
+  for (const k in state) {
+    serial[k] = {
+      yoga: [...state[k].yoga],
+      hip: [...state[k].hip],
+      quad: [...state[k].quad]
+    };
+  }
+  try { localStorage.setItem('mvt_state', JSON.stringify(serial)); } catch(e){}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('mvt_state');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    for (const k in parsed) {
+      state[k] = {
+        yoga: new Set(parsed[k].yoga || []),
+        hip: new Set(parsed[k].hip || []),
+        quad: new Set(parsed[k].quad || [])
+      };
+    }
+  } catch(e) {}
+}
+
+// ---- RENDER ----
+
+function renderDays() {
+  const dates = getWeekDates(weekOffset);
+  const today = new Date();
+  const todayKey = dateKey(today);
+  const activeKey = dateKey(getActiveDate());
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const row = document.getElementById('daysRow');
+  row.innerHTML = '';
+  dates.forEach((d, i) => {
+    const key = dateKey(d);
+    const btn = document.createElement('button');
+    btn.className = 'day-btn';
+    if (key === activeKey) btn.classList.add('active');
+    if (key === todayKey) btn.classList.add('today');
+    const s = state[key];
+    if (s && (s.yoga.size > 0 || s.hip.size > 0 || s.quad.size > 0)) btn.classList.add('has-activity');
+    btn.innerHTML = `<span class="day-label">${dayNames[i]}</span><span class="day-num">${d.getDate()}</span>`;
+    btn.onclick = () => { selectedDayIndex = i; render(); };
+    row.appendChild(btn);
+  });
+}
+
+function renderWeekLabel() {
+  const dates = getWeekDates(weekOffset);
+  const fmt = d => d.toLocaleDateString('en-AU', { day:'numeric', month:'short' });
+  document.getElementById('weekLabel').textContent = `${fmt(dates[0])} – ${fmt(dates[6])}`;
+}
+
+function renderYoga() {
+  const grid = document.getElementById('yoga-grid');
+  const s = getActiveDayState();
+  grid.innerHTML = '';
+  yogaPoses.forEach(p => {
+    const done = s.yoga.has(p.id);
+    const div = document.createElement('div');
+    div.className = 'move-btn' + (done ? ' done' : '');
+    div.innerHTML = `
+      <div class="move-check"></div>
+      <span class="move-name">${p.name}</span>
+      <button class="info-btn" title="Learn more">i</button>
+    `;
+    div.querySelector('.info-btn').onclick = (e) => { e.stopPropagation(); showPopup('yoga', p); };
+    div.onclick = (e) => {
+      if (e.target.classList.contains('info-btn')) return;
+      toggleItem('yoga', p.id);
+    };
+    grid.appendChild(div);
+  });
+  const done = s.yoga.size;
+  const total = yogaPoses.length;
+  document.getElementById('yoga-bar').style.width = total ? (done/total*100)+'%' : '0%';
+  document.getElementById('yoga-prog-label').textContent = `${done}/${total}`;
+}
+
+function renderHip() {
+  const list = document.getElementById('hip-list');
+  const s = getActiveDayState();
+  list.innerHTML = '';
+  hipDrills.forEach((d, i) => {
+    const done = s.hip.has(d.id);
+    const div = document.createElement('div');
+    div.className = 'step-item' + (done ? ' done' : '');
+    div.innerHTML = `
+      <div class="step-check"></div>
+      <span class="step-num">${String(i+1).padStart(2,'0')}</span>
+      <div style="flex:1">
+        <div class="step-name">${d.name}</div>
+        <div class="step-detail">${d.detail}</div>
+      </div>
+      <button class="step-info-btn" title="Learn more">i</button>
+    `;
+    div.querySelector('.step-info-btn').onclick = (e) => { e.stopPropagation(); showPopup('hip', d); };
+    div.onclick = (e) => {
+      if (e.target.classList.contains('step-info-btn')) return;
+      toggleItem('hip', d.id);
+    };
+    list.appendChild(div);
+  });
+  const done = s.hip.size;
+  const total = hipDrills.length;
+  document.getElementById('hip-bar').style.width = total ? (done/total*100)+'%' : '0%';
+  document.getElementById('hip-prog-label').textContent = `${done}/${total}`;
+}
+
+function renderQuad() {
+  const grid = document.getElementById('quad-grid');
+  const s = getActiveDayState();
+  grid.innerHTML = '';
+  quadMoves.forEach(m => {
+    const done = s.quad.has(m.id);
+    const div = document.createElement('div');
+    div.className = 'move-btn' + (done ? ' done' : '');
+    div.innerHTML = `
+      <div class="move-check"></div>
+      <span class="move-name">${m.name}</span>
+      <button class="info-btn" title="Learn more">i</button>
+    `;
+    div.querySelector('.info-btn').onclick = (e) => { e.stopPropagation(); showPopup('quad', m); };
+    div.onclick = (e) => {
+      if (e.target.classList.contains('info-btn')) return;
+      toggleItem('quad', m.id);
+    };
+    grid.appendChild(div);
+  });
+  const done = s.quad.size;
+  const total = quadMoves.length;
+  document.getElementById('quad-bar').style.width = total ? (done/total*100)+'%' : '0%';
+  document.getElementById('quad-prog-label').textContent = `${done}/${total}`;
+}
+
+function renderWeekSummary() {
+  const dates = getWeekDates(weekOffset);
+  const dayNames = ['M','T','W','T','F','S','S'];
+  const categories = [
+    { key: 'yoga',  total: yogaPoses.length,  dotsId: 'yoga-week-dots',  countId: 'yoga-week-count',  colorClass: 'yoga-color' },
+    { key: 'hip',   total: hipDrills.length,   dotsId: 'hip-week-dots',   countId: 'hip-week-count',   colorClass: 'hip-color'  },
+    { key: 'quad',  total: quadMoves.length,   dotsId: 'quad-week-dots',  countId: 'quad-week-count',  colorClass: 'quad-color' }
+  ];
+
+  const activeKey = dateKey(getActiveDate());
+
+  categories.forEach(cat => {
+    const dotsEl = document.getElementById(cat.dotsId);
+    const countEl = document.getElementById(cat.countId);
+    dotsEl.innerHTML = '';
+    let sessionCount = 0;
+
+    dates.forEach((d, i) => {
+      const key = dateKey(d);
+      const s = state[key];
+      const done = s ? s[cat.key].size : 0;
+      const isActive = key === activeKey;
+
+      const dot = document.createElement('div');
+      dot.className = 'block-dot';
+      if (done > 0 && done < cat.total) {
+        dot.classList.add('partial', cat.colorClass);
+        dot.textContent = done;
+        sessionCount++;
+      } else if (done >= cat.total) {
+        dot.classList.add('full', cat.colorClass);
+        dot.textContent = '✓';
+        sessionCount++;
+      } else {
+        dot.textContent = dayNames[i];
+      }
+      if (isActive) dot.style.outline = '2px solid rgba(255,255,255,0.12)';
+      dotsEl.appendChild(dot);
+    });
+
+    countEl.textContent = sessionCount + '×';
+  });
+}
+
+function renderSummary() {
+  const s = getActiveDayState();
+  const done = s.yoga.size + s.hip.size + s.quad.size;
+  const total = yogaPoses.length + hipDrills.length + quadMoves.length;
+  document.getElementById('totalDone').textContent = done;
+  document.getElementById('totalItems').textContent = total;
+
+  // count active days this week
+  const dates = getWeekDates(weekOffset);
+  let activeDays = 0;
+  dates.forEach(d => {
+    const k = dateKey(d);
+    const s2 = state[k];
+    if (s2 && (s2.yoga.size > 0 || s2.hip.size > 0 || s2.quad.size > 0)) activeDays++;
+  });
+  document.getElementById('weekDays').textContent = activeDays;
+}
+
+function render() {
+  renderWeekLabel();
+  renderDays();
+  renderWeekSummary();
+  renderYoga();
+  renderHip();
+  renderQuad();
+  renderSummary();
+}
+
+// ---- ACTIONS ----
+
+function toggleItem(category, id) {
+  const s = getActiveDayState();
+  if (s[category].has(id)) s[category].delete(id);
+  else s[category].add(id);
+  saveState();
+  render();
+}
+
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+document.getElementById('prevWeek').onclick = () => { weekOffset--; selectedDayIndex = null; render(); };
+document.getElementById('nextWeek').onclick = () => { weekOffset++; selectedDayIndex = null; render(); };
+
+// ---- POPUP ----
+
+function showPopup(type, item) {
+  const overlay = document.getElementById('popupOverlay');
+  const content = document.getElementById('popupContent');
+
+  const badgeLabels = { yoga: 'Yoga', hip: '90/90', quad: 'Quadrupedal' };
+  const linkHtml = item.link
+    ? `<a class="popup-link" href="${item.link}" target="_blank" rel="noopener">↗ View full guide</a>`
+    : '';
+  const tipClass = type === 'hip' ? 'orange' : type === 'quad' ? '' : 'blue';
+
+  content.innerHTML = `
+    <span class="popup-badge ${type}">${badgeLabels[type]}</span>
+    <h2>${item.name}</h2>
+    <p>${item.desc}</p>
+    <hr class="popup-divider">
+    <ul>
+      ${item.cues.map(c => `<li>${c}</li>`).join('')}
+    </ul>
+    ${item.tip ? `<div class="tip ${tipClass}"><strong>Key:</strong> ${item.tip}</div>` : ''}
+    ${linkHtml}
+  `;
+
+  overlay.classList.add('open');
+}
+
+function closePopup() {
+  document.getElementById('popupOverlay').classList.remove('open');
+}
+
+function closePopupIfOutside(e) {
+  if (e.target === document.getElementById('popupOverlay')) closePopup();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
+
+// ---- EXPORT / IMPORT ----
+
+function exportData() {
+  const serial = {};
+  for (const k in state) {
+    serial[k] = {
+      yoga: [...state[k].yoga],
+      hip:  [...state[k].hip],
+      quad: [...state[k].quad]
+    };
+  }
+  const blob = new Blob([JSON.stringify(serial, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = `movement-history-${today}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('History exported ✓');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      // Merge imported data with existing (imported wins on conflict)
+      for (const k in parsed) {
+        state[k] = {
+          yoga: new Set(parsed[k].yoga || []),
+          hip:  new Set(parsed[k].hip  || []),
+          quad: new Set(parsed[k].quad || [])
+        };
+      }
+      saveState();
+      render();
+      showToast('History imported ✓');
+    } catch(err) {
+      showToast('Import failed — invalid file');
+    }
+    // Reset so the same file can be re-imported if needed
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ---- INIT ----
+loadState();
+render();
+</script>
+</body>
+</html>
